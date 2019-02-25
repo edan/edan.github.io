@@ -13,6 +13,10 @@
         .blue {
             color: blue;
         }
+        #map {
+            width: 500px;
+            height: 500px;
+        }
     </style>
 </head>
 
@@ -20,33 +24,62 @@
     <div id="compat"></div>
     <div id="rejected"></div>
     <div id="lat">Detecting lat...</div>
-    <div id="long">Detecting long...</div>
+    <div id="lng">Detecting long...</div>
+    <div id="map"></div>
     <script type="text/javascript">
-    var el = document.getElementById("compat");
-    if ("geolocation" in navigator) {
-        el.textContent = "Your browser supports geolocation";
-        el.classList.add("green")
-    } else {
-        el.textContent += "Your browser does not support geolocation";
-        el.classList.add("red")
-    }
-    navigator.geolocation.getCurrentPosition(
-        function(position) {
-            var lat = document.getElementById("lat");
-            var long = document.getElementById("long");
-            lat.innerText = position.coords.latitude;
-            long.innerText = position.coords.longitude;
-            lat.classList.add("blue");
-            long.classList.add("blue");
-        },
-        function(error) {
-            if (error.code == error.PERMISSION_DENIED) {
-                var el = document.getElementById("rejected");
-                el.innerText = "You blocked location services";
-            }
+        var state = {
+            lat: 0,
+            lng: 0,
+            mapInit: false,
+        };
+        function buildMap() {
+            state.mapInit = true;
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: {lat: state.lat, lng: state.lng},
+                zoom: 20
+            });
+            var marker = new google.maps.Marker({
+                position: {lat: state.lat, lng: state.lng},
+                map: map,
+                title: 'You are here!'
+            });
         }
-    );
+        document.addEventListener('DOMContentLoaded', function(event) {
+            var el = document.getElementById("compat");
+            if ("geolocation" in navigator) {
+                el.textContent = "Your browser supports geolocation";
+                el.classList.add("green")
+            } else {
+                el.textContent += "Your browser does not support geolocation";
+                el.classList.add("red")
+            }
+
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    var lat = document.getElementById("lat");
+                    var lng = document.getElementById("lng");
+                    state.lat = position.coords.latitude;
+                    state.lng = position.coords.longitude;
+                    lat.innerText = position.coords.latitude;
+                    lng.innerText = position.coords.longitude;
+                    lat.classList.add("blue");
+                    lng.classList.add("blue");
+                    if (state.mapInit) {
+                        buildMap();
+                    }
+                },
+                function(error) {
+                    if (error.code == error.PERMISSION_DENIED) {
+                        var el = document.getElementById("rejected");
+                        el.innerText = "You blocked location services";
+                    }
+                }
+            );
+        })
     </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOQtFUTgh4poPJID4tFzHxY98EwdjrSco&callback=buildMap"
+    async defer></script>
 </body>
 
 </html>
