@@ -31,19 +31,55 @@
             lat: 0,
             lng: 0,
             mapInit: false,
+            watchId: null,
         };
-        function buildMap() {
+        function success(pos) {
+            var crd = pos.coords;
+            state.lat = pos.coords.latitude;
+            state.lng = pos.coords.longitude;
+            buildMap();
+        }
+        function error(err) {
+            console.warn('ERROR(' + err.code + '): ' + err.message);
+        }
+        function initMap() {
             state.mapInit = true;
             map = new google.maps.Map(document.getElementById('map'), {
                 center: {lat: state.lat, lng: state.lng},
                 zoom: 20
             });
+            setMap();
+        }
+        function setMap() {
             var marker = new google.maps.Marker({
                 position: {lat: state.lat, lng: state.lng},
                 map: map,
-                title: 'You are here!'
+                draggable: true,
+                animation: google.maps.Animation.DROP,
+                title: 'Drag to your position'
             });
+            options = {
+                enableHighAccuracy: false,
+                maximumAge: 0
+            };
+            google.maps.event.addListener(marker, "dragend", function(event) {
+                state.lat = event.latLng.lat();
+                state.lng = event.latLng.lng();
+                updatePostion();
+            });
+            updatePostion();
+            // state.watchId = navigator.geolocation.watchPosition(success, error, options);
         }
+
+        function updatePostion() {
+            var lat = document.getElementById("lat");
+            var lng = document.getElementById("lng");
+            lat.innerText = state.lat;
+            lng.innerText = state.lng;
+            lat.classList.add("blue");
+            lng.classList.add("blue");
+        }
+
         document.addEventListener('DOMContentLoaded', function(event) {
             var el = document.getElementById("compat");
             if ("geolocation" in navigator) {
@@ -54,19 +90,12 @@
                 el.classList.add("red")
             }
 
-
             navigator.geolocation.getCurrentPosition(
                 function(position) {
-                    var lat = document.getElementById("lat");
-                    var lng = document.getElementById("lng");
                     state.lat = position.coords.latitude;
                     state.lng = position.coords.longitude;
-                    lat.innerText = position.coords.latitude;
-                    lng.innerText = position.coords.longitude;
-                    lat.classList.add("blue");
-                    lng.classList.add("blue");
                     if (state.mapInit) {
-                        buildMap();
+                        updatePostion();
                     }
                 },
                 function(error) {
@@ -78,7 +107,7 @@
             );
         })
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOQtFUTgh4poPJID4tFzHxY98EwdjrSco&callback=buildMap"
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOQtFUTgh4poPJID4tFzHxY98EwdjrSco&callback=initMap"
     async defer></script>
 </body>
 
