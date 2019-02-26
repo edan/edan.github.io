@@ -28,8 +28,8 @@
     <div id="map"></div>
     <script type="text/javascript">
         var state = {
-            lat: 0,
-            lng: 0,
+            map: null,
+            position: null,
             mapInit: false,
             watchId: null,
         };
@@ -44,38 +44,46 @@
         }
         function initMap() {
             state.mapInit = true;
-            map = new google.maps.Map(document.getElementById('map'), {
-                center: {lat: state.lat, lng: state.lng},
+            state.map = new google.maps.Map(document.getElementById('map'), {
                 zoom: 20
             });
-            setMap();
+            initMarker();
+            setMapPostion();
         }
-        function setMap() {
-            var marker = new google.maps.Marker({
-                position: {lat: state.lat, lng: state.lng},
-                map: map,
+        function initMarker() {
+            state.marker = new google.maps.Marker({
+                position: state.position,
+                map: state.map,
                 draggable: true,
                 animation: google.maps.Animation.DROP,
-                title: 'Drag to your position'
+                title: 'Drag to your position',
             });
-            options = {
-                enableHighAccuracy: false,
-                maximumAge: 0
-            };
-            google.maps.event.addListener(marker, "dragend", function(event) {
-                state.lat = event.latLng.lat();
-                state.lng = event.latLng.lng();
-                updatePostion();
+            google.maps.event.addListener(state.marker, "dragend", function(event) {
+                state.position = {
+                    lat: event.latLng.lat(),
+                    lng: event.latLng.lng(),
+                };
+                updateUserPostion();
             });
-            updatePostion();
+            // options = {
+            //     enableHighAccuracy: false,
+            //     maximumAge: 0,
+            // };
             // state.watchId = navigator.geolocation.watchPosition(success, error, options);
         }
 
-        function updatePostion() {
+        function setMapPostion(){
+            if (state.map && state.position) {
+                console.log('setting map position')
+                state.map.setCenter(state.position);
+                state.marker.setPosition(state.position);
+            }
+        }
+        function updateUserPostion() {
             var lat = document.getElementById("lat");
             var lng = document.getElementById("lng");
-            lat.innerText = state.lat;
-            lng.innerText = state.lng;
+            lat.innerText = state.position.lat;
+            lng.innerText = state.position.lng;
             lat.classList.add("blue");
             lng.classList.add("blue");
         }
@@ -92,11 +100,12 @@
 
             navigator.geolocation.getCurrentPosition(
                 function(position) {
-                    state.lat = position.coords.latitude;
-                    state.lng = position.coords.longitude;
-                    if (state.mapInit) {
-                        updatePostion();
-                    }
+                    state.position = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    };
+                    setMapPostion();
+                    updateUserPostion();
                 },
                 function(error) {
                     if (error.code == error.PERMISSION_DENIED) {
