@@ -33,15 +33,6 @@
             mapInit: false,
             watchId: null,
         };
-        function success(pos) {
-            var crd = pos.coords;
-            state.lat = pos.coords.latitude;
-            state.lng = pos.coords.longitude;
-            buildMap();
-        }
-        function error(err) {
-            console.warn('ERROR(' + err.code + '): ' + err.message);
-        }
         function initMap() {
             state.mapInit = true;
             state.map = new google.maps.Map(document.getElementById('map'), {
@@ -65,13 +56,7 @@
                 };
                 updateUserPostion();
             });
-            // options = {
-            //     enableHighAccuracy: false,
-            //     maximumAge: 0,
-            // };
-            // state.watchId = navigator.geolocation.watchPosition(success, error, options);
         }
-
         function setMapPostion(){
             if (state.map && state.position) {
                 console.log('setting map position')
