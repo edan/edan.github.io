@@ -27,20 +27,84 @@
     <div id="lng">Detecting long...</div>
     <div id="map"></div>
     <script type="text/javascript">
+
+        function BahaMarOverlay(bounds, image, map) {
+            this.bounds = bounds;
+            this.image = image;
+            this.map = map;
+            this.el = null;
+            this.setMap(map);
+        };
+
+        function decorate(obj) {
+            obj.prototype.onAdd = function() {
+                var div = document.createElement('div');
+                div.style.borderStyle = 'none';
+                div.style.borderWidth = '0px';
+                div.style.position = 'absolute';
+
+                // Create the img element and attach it to the div.
+                var img = document.createElement('img');
+                img.src = this.image;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.position = 'absolute';
+                div.appendChild(img);
+
+                this.el = div;
+
+                var panes = this.getPanes();
+                panes.overlayLayer.appendChild(div);
+            };
+
+            obj.prototype.draw = function() {
+                var overlayProjection = this.getProjection();
+
+                var sw = overlayProjection.fromLatLngToDivPixel(this.bounds.getSouthWest());
+                var ne = overlayProjection.fromLatLngToDivPixel(this.bounds.getNorthEast());
+
+                var div = this.el;
+                div.style.left = sw.x + 'px';
+                div.style.top = ne.y + 'px';
+                div.style.width = (ne.x - sw.x) + 'px';
+                div.style.height = (sw.y - ne.y) + 'px';
+            };
+
+            obj.prototype.onRemove = function() {
+                this.el.parentNode.removeChild(this.el);
+                this.el = null;
+            };
+        }
         var state = {
             map: null,
-            position: null,
+            //position: null,
+            position: {
+                lat: 25.0706,
+                lng: -77.3967,
+            },
             mapInit: false,
             watchId: null,
+            overlay: null,
+            bounds: null,
+            overlayImage: "/bahamar.png",
         };
+
         function initMap() {
+            BahaMarOverlay.prototype = new google.maps.OverlayView();
+            decorate(BahaMarOverlay);
+            state.bounds = new google.maps.LatLngBounds(
+                new google.maps.LatLng(state.position.lat, state.position.lng),
+                new google.maps.LatLng(state.position.lat + .009, state.position.lng + .009)
+            );
             state.mapInit = true;
             state.map = new google.maps.Map(document.getElementById('map'), {
                 zoom: 20
             });
+            state.overlay = new BahaMarOverlay(state.bounds, state.overlayImage, state.map)
             initMarker();
             setMapPostion();
-        }
+        };
+
         function initMarker() {
             state.marker = new google.maps.Marker({
                 position: state.position,
@@ -56,14 +120,16 @@
                 };
                 updateUserPostion();
             });
-        }
+        };
+
         function setMapPostion(){
             if (state.map && state.position) {
                 console.log('setting map position')
                 state.map.setCenter(state.position);
                 state.marker.setPosition(state.position);
             }
-        }
+        };
+
         function updateUserPostion() {
             var lat = document.getElementById("lat");
             var lng = document.getElementById("lng");
@@ -85,10 +151,12 @@
 
             navigator.geolocation.getCurrentPosition(
                 function(position) {
+                    /*
                     state.position = {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude,
                     };
+                    */
                     setMapPostion();
                     updateUserPostion();
                 },
